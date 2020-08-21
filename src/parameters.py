@@ -6,7 +6,6 @@ class Params:
     def __init__(self):
         parser = argparse.ArgumentParser(description='Preprocess')
         parser.add_argument('-debug', action='store', default=False, type=strtobool)
-
         parser.add_argument('-bert_name', action='store', default='bert-base-uncased', type=str)
         parser.add_argument('-word_embedding_dropout', action='store', default=0.05, type=float)
         parser.add_argument('-cuda_devices', action='store', default='0', type=str)
@@ -31,9 +30,21 @@ class Params:
         parser.add_argument('-add_hard_negatives', action='store', default=True, type=strtobool)
         parser.add_argument('-metionPooling', action='store', default="CLS", type=str)
         parser.add_argument('-entityPooling', action='store', default="CLS", type=str)
-
+    
         parser.add_argument('-dimentionReduction', action='store', default=False, type=strtobool)
         parser.add_argument('-dimentionReductionToThisDim', action='store', default=300, type=int)
+
+        # Custom arguments
+
+        ## Load from checkpoint
+        parser.add_argument('-load_from_checkpoint', action='store', default=False, type=strtobool)
+        parser.add_argument('-model_path', action='store', default='./', type=str)
+        parser.add_argument('-mention_encoder_filename', action='store', default='mention_encoder.bin', type=str)
+        parser.add_argument('-entity_encoder_filename', action='store', default='entity_encoder.bin', type=str)
+        parser.add_argument('-model_filename', action='store', default='model.bin', type=str)
+
+        ## Save to checkpoint
+        parser.add_argument('-save_checkpoints', action='store', default=False, type=strtobool)
 
         parser = self.fixed_params_for_preprocess_adder(parser=parser)
         self.opts = parser.parse_args(sys.argv[1:])

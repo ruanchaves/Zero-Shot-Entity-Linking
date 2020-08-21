@@ -12,6 +12,56 @@ from tqdm import tqdm
 import torch
 from torch.nn.functional import normalize
 
+# Custom imports
+import dill as pickle 
+import pathlib
+
+def load_model_objects(
+            model_path=None,
+            mention_encoder_filename=None,
+            entity_encoder_filename=None,
+            model_filename=None):
+
+    mention_encoder_path = os.path.join(model_path, mention_encoder_filename)
+    entity_encoder_path = os.path.join(model_path, entity_encoder_filename)
+    model_file_path = os.path.join(model_path, model_filename)
+
+    mention_encoder = pickle_load_object(mention_encoder_path)
+    entity_encoder = pickle_load_object(entity_encoder_path)
+    model = pickle_load_object(model_file_path)
+
+    return mention_encoder, entity_encoder, model
+
+def save_model_objects(
+            model_object=None,
+            mention_encoder_object=None,
+            entity_encoder_object=None,
+            model_path=None,
+            mention_encoder_filename=None,
+            entity_encoder_filename=None,
+            model_filename=None,
+            epoch=0
+):
+    target_path = os.path.join(model_path, str(epoch))
+    pathlib.Path(target_path).mkdir(parents=True, exist_ok=True)
+
+    model_file_path = os.path.join(target_path, model_filename)    
+    mention_encoder_path = os.path.join(target_path, mention_encoder_filename)
+    entity_encoder_path = os.path.join(target_path, entity_encoder_filename)
+
+    pickle_save_object(model_object, model_file_path)
+    pickle_save_object(mention_encoder_object, mention_encoder_path)
+    pickle_save_object(entity_encoder_object, entity_encoder_path)
+
+def pickle_load_object(path):
+    with open(path,'rb') as f:
+        obj = pickle.load(f)
+    return obj 
+
+def pickle_save_object(obj, path):
+    with open(path,'wb') as f:
+        pickle.dump(obj, f)
+
 def dummynegativesloader(mentionNumbers=100):
     mention_uniq_id2negatives = {}
     dummy_negative_dui_idxs = [0, 1]

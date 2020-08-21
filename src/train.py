@@ -14,6 +14,11 @@ import torch.optim as optim
 from evaluator import oneLineLoaderForDevOrTestEvaluation, devEvalExperimentEntireDevWorldLog
 from token_indexing import TokenIndexerReturner
 from hardnegative_searcher import HardNegativesSearcherForEachEpochStart
+
+# Custom functions
+from utils import load_model_objects, save_model_objects
+import os, pathlib
+
 torch.backends.cudnn.deterministic = True
 seed = 777
 np.random.seed(seed)
@@ -41,10 +46,18 @@ def main():
     global_tokenizer = tokenIndexing.berttokenizer_returner()
     global_tokenIndexer = tokenIndexing.token_indexer_returner()
 
-    mention_encoder = Pooler_for_mention(args=opts, word_embedder=textfieldEmbedder)
-    entity_encoder = Pooler_for_title_and_desc(args=opts, word_embedder=textfieldEmbedder)
-    model = Biencoder(args=opts, mention_encoder=mention_encoder, entity_encoder=entity_encoder, vocab=vocab)
+    if opts.load_from_checkpoint:
+        mention_encoder, entity_encoder, model = load_model_objects(
+            model_path=opts.model_path,
+            mention_encoder_filename=opts.mention_encoder_filename,
+            entity_encoder_filename=opts.entity_encoder_filename,
+            model_filename=opts.model_filename)
+    else:
+        mention_encoder = Pooler_for_mention(args=opts, word_embedder=textfieldEmbedder)
+        entity_encoder = Pooler_for_title_and_desc(args=opts, word_embedder=textfieldEmbedder)
+        model = Biencoder(args=opts, mention_encoder=mention_encoder, entity_encoder=entity_encoder, vocab=vocab)
     model = model.cuda()
+
     optimizer = optim.Adam(filter(lambda param: param.requires_grad, model.parameters()), lr=opts.lr, eps=opts.epsilon,
                            weight_decay=opts.weight_decay, betas=(opts.beta1, opts.beta2), amsgrad=opts.amsgrad)
     devEvalEpochs = [j for j in range(1, 1000)] if opts.add_hard_negatives else \
@@ -94,8 +107,21 @@ def main():
                                                t_entire_h50c, t_entire_h64c, t_entire_h100c,
                                                t_entire_h500c, t_entire_datapoints,
                                                epoch=epoch)
+            
         oneep_train_end = time.time()
         print('epoch {0} train time'.format(epoch+1), oneep_train_end - oneep_train_start, 'sec')
+
+        if opts.save_checkpoints:
+            save_model_objects(
+                model_object=model,
+                mention_encoder_object=mention_encoder,
+                entity_encoder_object=entity_encoder,
+                model_path=experiment_logdir,
+                mention_encoder_filename=opts.mention_encoder_filename,
+                entity_encoder_filename=opts.entity_encoder_filename,
+                model_filename=opts.model_filename,
+                epoch=epoch)
+
 
     print('====training finished=======')
 
