@@ -3,13 +3,17 @@ from utils import parse_duidx2encoded_emb_2_dui2emb, KBIndexerWithFaiss, jdump
 from utils import oneworld_entiredataset_loader_for_encoding_entities, BiEncoderTopXRetriever
 from model import WrappedModel_for_entityencoding
 from encoders import InKBAllEntitiesEncoder, BiEncoderForOnlyMentionOutput
-from utils_for_evaluator import DevandTest_BiEncoder_IterateEvaluator
+from utils_for_evaluator import DevandTest_BiEncoder_IterateEvaluator, DevandTest_BiEncoder_IterateEvaluator_RawData_Generator
 import pdb, os
-from commons import DEV_WORLDS, TEST_WORLDS, DevEvalDuringTrainDirForEachExperiment
+from commons import DEV_WORLDS, TEST_WORLDS, HOW_MANY_TOP_HITS_PRESERVED, DevEvalDuringTrainDirForEachExperiment
 import copy
-from data_reader import WorldsReader
+from data_reader import WorldsReader, WorldsReaderOnline
 
-class Evaluate_one_world:
+# Custom imports
+from overrides import overrides
+from utils import pickle_save_object 
+
+class Evaluate_one_world(object):
     def __init__(self, args, world_name, reader, embedder, trainfinished_mention_encoder,trainfinished_entity_encoder,
                  vocab, experiment_logdir, dev_or_test, berttokenizer, bertindexer):
         self.args = args
@@ -186,6 +190,42 @@ def oneLineLoaderForDevOrTestEvaluation(dev_or_test_flag, opts, global_tokenInde
 
     return entire_h1c, entire_h10c, entire_h50c, entire_h64c, entire_h100c, entire_h500c, entire_datapoints
 
+# Custom function
+def oneLineLoaderForDevOrTestEvaluationRawData(dev_or_test_flag, opts, global_tokenIndexer, global_tokenizer,
+                                        textfieldEmbedder, mention_encoder, entity_encoder, vocab,
+                                        experiment_logdir, finalEvalFlag=0, trainEpoch=-1):
+    if opts.debug:
+        evaluated_world = ['yugioh']
+    else:
+        evaluated_world = DEV_WORLDS if dev_or_test_flag == 'dev' else TEST_WORLDS
+
+    for world_name in evaluated_world:
+        reader_for_eval = WorldsReader(args=opts, world_name=world_name, token_indexers=global_tokenIndexer,
+                                       tokenizer=global_tokenizer)
+        Evaluator = Evaluate_one_world_raw_data(args=opts, world_name=world_name,
+                                       reader=reader_for_eval,
+                                       embedder=textfieldEmbedder,
+                                       trainfinished_mention_encoder=mention_encoder,
+                                       trainfinished_entity_encoder=entity_encoder,
+                                       vocab=vocab, experiment_logdir=experiment_logdir,
+                                       dev_or_test=dev_or_test_flag,
+                                       berttokenizer=global_tokenizer,
+                                       bertindexer=global_tokenIndexer)
+        Evaluate_one_world_raw_data.finalEvalFlag = copy.copy(finalEvalFlag)
+        result = \
+            Evaluator.evaluate_one_world(trainEpoch=trainEpoch)
+
+    return result
+
+
+# Custom function
+def devEvalExperimentEntireDevWorldLogRawData(experiment_logdir, result, epoch=0):
+    dump_dir = experiment_logdir + DevEvalDuringTrainDirForEachExperiment + '/'
+    if not os.path.exists(dump_dir):
+        os.mkdir(path=dump_dir)
+    pklpath = dump_dir + 'ep' + str(epoch) + 'devEntireEvalResult.pkl'
+    pickle_save_object(result, pklpath)
+
 def devEvalExperimentEntireDevWorldLog(experiment_logdir,  t_entire_h1c, t_entire_h10c, t_entire_h50c,
                                        t_entire_h64c, t_entire_h100c, t_entire_h500c, t_entire_datapoints,
                                        epoch=0):
@@ -201,3 +241,77 @@ def devEvalExperimentEntireDevWorldLog(experiment_logdir,  t_entire_h1c, t_entir
          'h100c_Dev': devEvalResultWithPercent[4], 'h500c_Dev': devEvalResultWithPercent[5]
          }
     jdump(j=j, path=jpath)
+
+class Evaluate_one_world_raw_data(Evaluate_one_world):
+
+    def __init__(self, *args, **kwargs):
+        self.enable_logging = True
+        super().__init__(*args, **kwargs)
+        self.dui2encoded_emb, self.duidx2encoded_emb = self.dui2EncoderEntityEmbReturner()
+        print('=====Encoding all entities in KB FINISHED!=====')
+
+        print('\n+++++Indexnizing KB from encoded entites+++++')
+        self.forstoring_encoded_entities_to_faiss = self.encodedEmbFaissAdder(dui2EncodedEmb=self.dui2encoded_emb)
+        print('+++++Indexnizing KB from encoded entites FINISHED!+++++')
+
+        print('Loading Biencoder')
+        self.biencoder_onlyfor_encodingmentions = BiEncoderForOnlyMentionOutput(args=self.args,
+                                                                mention_encoder=self.trainfinished_mention_encoder,
+                                                                vocab=self.vocab)
+        self.biencoder_onlyfor_encodingmentions.cuda()
+        self.biencoder_onlyfor_encodingmentions.eval()
+        print('Loaded: Biencoder')
+
+    def set_mentions(self, mentions):
+        self.reader.mentions = mentions
+
+    @overrides
+    def logDevEvaluationOfOneWorldDuringTrain(self, result, trainEpoch=-1):
+        if not os.path.exists(self.experiment_logdir + DevEvalDuringTrainDirForEachExperiment + '/'):
+            os.mkdir(self.experiment_logdir + DevEvalDuringTrainDirForEachExperiment + '/')
+        if not os.path.exists(self.experiment_logdir + DevEvalDuringTrainDirForEachExperiment + '/' + self.world_name + '/'):
+            os.mkdir(self.experiment_logdir + DevEvalDuringTrainDirForEachExperiment + '/' + self.world_name + '/')
+        dumped_pklpath = self.experiment_logdir + DevEvalDuringTrainDirForEachExperiment + '/' + self.world_name + '/' + 'devEval_ep' + str(trainEpoch) + '.pkl'
+        pickle_save_object(result, dumped_pklpath)
+
+    @overrides
+    def log_one_world(self, result):
+        if not os.path.exists(self.experiment_logdir + 'final_' + self.dev_or_test):
+            os.mkdir(self.experiment_logdir + 'final_' + self.dev_or_test)
+        dumped_pklpath = self.experiment_logdir + 'final_' + self.dev_or_test + '/' + self.world_name + '_eval.pkl'
+
+        pickle_save_object(result, dumped_pklpath)      
+
+    @overrides
+    def evaluate_one_world(self, trainEpoch=-1, how_many_top_hits_preserved=HOW_MANY_TOP_HITS_PRESERVED):
+        print('Evaluation for BiEncoder start')
+        topXretriever = BiEncoderTopXRetriever(args=self.args,
+                                               vocab=self.vocab,
+                                               biencoder_onlyfor_encodingmentions=self.biencoder_onlyfor_encodingmentions,
+                                               faiss_stored_kb=self.forstoring_encoded_entities_to_faiss.indexed_faiss_returner(),
+                                               reader_for_mentions=self.reader,
+                                               duidx2encoded_emb=self.duidx2encoded_emb
+                                               )
+
+        oneworld_evaluator = DevandTest_BiEncoder_IterateEvaluator_RawData_Generator(args=self.args,
+                                                                   BiEncoderEvaluator=topXretriever,
+                                                                   experiment_logdir=self.experiment_logdir,
+                                                                   world_name=self.world_name)
+
+        result = []
+        for faiss_search_candidate_result_duidxs, mention_uniq_ids, gold_duidxs in \
+            oneworld_evaluator.final_evaluation(train_or_dev_or_test_flag=self.dev_or_test, how_many_top_hits_preserved=how_many_top_hits_preserved):
+            row = {
+                "faiss_search_candidate_result_duidxs": faiss_search_candidate_result_duidxs.flatten().tolist(),
+                "mention_uniq_ids": mention_uniq_ids.flatten().tolist(),
+                "gold_duidxs": gold_duidxs.flatten().tolist()
+            }
+            result.append(row)
+
+        if self.enable_logging:
+            if trainEpoch == -1:
+                self.log_one_world(result=result)
+            else:
+                self.logDevEvaluationOfOneWorldDuringTrain(result=result, trainEpoch=trainEpoch)
+
+        return result

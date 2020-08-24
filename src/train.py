@@ -1,5 +1,5 @@
 import pdb, time
-from utils import experiment_logger, cuda_device_parser, dev_or_test_finallog, worlds_loader
+from utils import experiment_logger, cuda_device_parser, dev_or_test_finallog, dev_or_test_finallog_rawdata, worlds_loader
 from parameters import Params
 from data_reader import WorldsReader
 import torch
@@ -11,7 +11,7 @@ from allennlp.training.trainer import Trainer
 from encoders import Pooler_for_mention, Pooler_for_title_and_desc
 from model import Biencoder
 import torch.optim as optim
-from evaluator import oneLineLoaderForDevOrTestEvaluation, devEvalExperimentEntireDevWorldLog
+from evaluator import oneLineLoaderForDevOrTestEvaluation, oneLineLoaderForDevOrTestEvaluationRawData, devEvalExperimentEntireDevWorldLog, devEvalExperimentEntireDevWorldLogRawData
 from token_indexing import TokenIndexerReturner
 from hardnegative_searcher import HardNegativesSearcherForEachEpochStart
 
@@ -103,10 +103,26 @@ def main():
                 experiment_logdir=experiment_logdir,
                 finalEvalFlag=0,
                 trainEpoch=epoch+1)
+
+            result = oneLineLoaderForDevOrTestEvaluationRawData(
+                dev_or_test_flag='dev',
+                opts=opts,
+                global_tokenIndexer=global_tokenIndexer,
+                global_tokenizer=global_tokenizer,
+                textfieldEmbedder=textfieldEmbedder,
+                mention_encoder=mention_encoder,
+                entity_encoder=entity_encoder,
+                vocab=vocab,
+                experiment_logdir=experiment_logdir,
+                finalEvalFlag=0,
+                trainEpoch=epoch+1)
+            
             devEvalExperimentEntireDevWorldLog(experiment_logdir, t_entire_h1c, t_entire_h10c,
                                                t_entire_h50c, t_entire_h64c, t_entire_h100c,
                                                t_entire_h500c, t_entire_datapoints,
                                                epoch=epoch)
+
+            devEvalExperimentEntireDevWorldLogRawData(experiment_logdir, result, epoch=epoch)
             
         oneep_train_end = time.time()
         print('epoch {0} train time'.format(epoch+1), oneep_train_end - oneep_train_start, 'sec')
@@ -143,10 +159,25 @@ def main():
                                                       experiment_logdir=experiment_logdir,
                                                       finalEvalFlag=1,
                                                       trainEpoch=-1)
+                
+            result \
+                = oneLineLoaderForDevOrTestEvaluationRawData(dev_or_test_flag=dev_or_test_flag,
+                                                      opts=opts,
+                                                      global_tokenIndexer=global_tokenIndexer,
+                                                      global_tokenizer=global_tokenizer,
+                                                      textfieldEmbedder=textfieldEmbedder,
+                                                      mention_encoder=mention_encoder,
+                                                      entity_encoder=entity_encoder,
+                                                      vocab=vocab,
+                                                      experiment_logdir=experiment_logdir,
+                                                      finalEvalFlag=1,
+                                                      trainEpoch=-1)
 
             dev_or_test_finallog(entire_h1c, entire_h10c, entire_h50c, entire_h64c, entire_h100c,
                                  entire_h500c, entire_datapoints, dev_or_test_flag, experiment_logdir,
                                  )
+            
+            dev_or_test_finallog_rawdata(result, experiment_logdir, dev_or_test_flag)
 
     exp_end_time = time.time()
     print('===experiment finised', exp_end_time-exp_start_time, 'sec')

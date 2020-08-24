@@ -2,3 +2,4 @@ data
 src/experiment_logdir
 src/__pycache__
 venv
+zeroshotbiencoder.egg-info

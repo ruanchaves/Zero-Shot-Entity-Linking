@@ -159,6 +159,30 @@ class WorldsReader(DatasetReader):
         self.mentionId2GoldDUIDX = copy.copy(mentionId2GoldDUIDX)
         self.mentionId2HardNegativeDUIDX = copy.copy(mentionId2HardNegativeDUIDX)
 
+class WorldsReaderOnline(WorldsReader):
+
+    def __init__(self, *args, **kwargs):
+        self.mentions = None
+        super().__init__(*args, **kwargs)
+
+    def set_mentions(self, mentions):
+        self.mentions = mentions
+
+    @overrides
+    def from_worldname_2_mentions(self):
+        j = self.mentions
+        intidx2v = {}
+        for stidx, v in j.items():
+            intidx2v.update({int(stidx):v})
+        return intidx2v
+
+    @overrides
+    def from_worldname_2_mentionNumbers(self):
+        if not self.mentions:
+            return 10
+        return len(self.mentions)
+
+
 '''
 For iterating all entities
 '''

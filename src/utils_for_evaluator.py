@@ -1,6 +1,8 @@
 import numpy as np
+from overrides import overrides
+from commons import HOW_MANY_TOP_HITS_PRESERVED
 
-class DevandTest_BiEncoder_IterateEvaluator:
+class DevandTest_BiEncoder_IterateEvaluator(object):
     def __init__(self, args, BiEncoderEvaluator, experiment_logdir, world_name):
         self.BiEncoderEvaluator = BiEncoderEvaluator
         self.experiment_logdir = experiment_logdir
@@ -65,3 +67,14 @@ class DevandTest_BiEncoder_IterateEvaluator:
                     continue
 
         return b_Hits1, b_Hits10, b_Hits50, b_Hits64, b_Hits100, b_Hits500
+
+class DevandTest_BiEncoder_IterateEvaluator_RawData_Generator(DevandTest_BiEncoder_IterateEvaluator):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    @overrides
+    def final_evaluation(self, train_or_dev_or_test_flag, how_many_top_hits_preserved=HOW_MANY_TOP_HITS_PRESERVED):
+
+        for faiss_search_candidate_result_duidxs, mention_uniq_ids, gold_duidxs in self.BiEncoderEvaluator.biencoder_tophits_retrievaler(train_or_dev_or_test_flag, how_many_top_hits_preserved):
+            yield faiss_search_candidate_result_duidxs, mention_uniq_ids, gold_duidxs

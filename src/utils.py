@@ -16,6 +16,8 @@ from torch.nn.functional import normalize
 import dill as pickle 
 import pathlib
 
+# Custom functions 
+
 def load_model_objects(
             model_path=None,
             mention_encoder_filename=None,
@@ -61,6 +63,8 @@ def pickle_load_object(path):
 def pickle_save_object(obj, path):
     with open(path,'wb') as f:
         pickle.dump(obj, f)
+
+# Default functions
 
 def dummynegativesloader(mentionNumbers=100):
     mention_uniq_id2negatives = {}
@@ -152,6 +156,11 @@ def dev_or_test_finallog(entire_h1c, entire_h10c, entire_h50c, entire_h64c, enti
               'entire_h100_percent': entire_h100c / entire_datapoints * 100,
               'entire_h500_percent': entire_h500c / entire_datapoints * 100
           })
+
+# Custom function
+def dev_or_test_finallog_rawdata(result, experiment_logdir, dev_or_test_flag):
+    pklpath = experiment_logdir + dev_or_test_flag + '_eval.pkl'
+    pickle_save_object(result, pklpath)
 
 def experiment_logger(args):
     '''
