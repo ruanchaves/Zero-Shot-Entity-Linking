@@ -1,9 +1,13 @@
 HOW_MANY_TOP_HITS_PRESERVED = 1
 
-TRAIN_WORLDS = ['american_football', 'doctor_who', 'fallout', 'final_fantasy',
-                'military', 'pro_wrestling', 'starwars', 'world_of_warcraft']
-DEV_WORLDS = ['coronation_street', 'muppets', 'ice_hockey', 'elder_scrolls']
-TEST_WORLDS = ['forgotten_realms', 'lego', 'star_trek', 'yugioh']
+# TRAIN_WORLDS = ['american_football', 'doctor_who', 'fallout', 'final_fantasy',
+#                 'military', 'pro_wrestling', 'starwars', 'world_of_warcraft']
+# DEV_WORLDS = ['coronation_street', 'muppets', 'ice_hockey', 'elder_scrolls']
+# TEST_WORLDS = ['forgotten_realms', 'lego', 'star_trek', 'yugioh']
+
+TRAIN_WORLDS = ['wikipedia']
+DEV_WORLDS = ['lego']
+TEST_WORLDS = ['yugioh']
 
 MENTION_START_TOKEN = '[unused1]'
 MENTION_END_TOKEN = '[unused2]'
