@@ -12,7 +12,7 @@ class Params:
         parser.add_argument('-allen_lazyload', action='store', default=True, type=strtobool)
         parser.add_argument('-batch_size_for_train', action='store', default=32, type=int)
         parser.add_argument('-batch_size_for_eval', action='store', default=8, type=int)
-        parser.add_argument('-batch_size_for_kb_encoder', action='store', default=3000, type=int)
+        parser.add_argument('-batch_size_for_kb_encoder', action='store', default=5000, type=int)
         parser.add_argument('-hard_negatives_num', action='store', default=10, type=int)
         parser.add_argument('-num_epochs', action='store', default=3, type=int)
         parser.add_argument('-lr', action="store", default=1e-5, type=float)
