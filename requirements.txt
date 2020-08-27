@@ -4,3 +4,4 @@ transformers==2.8.0
 torch==1.4.0
 allennlp==0.9.0
 faiss-gpu==1.6.3
+dill==0.3.2
