@@ -123,7 +123,7 @@ def text_parser(batch, max_length=300):
         for item in get_mentions_and_context(parser.data, max_length=max_length):
             yield item
 
-def text_linker(manager_dict, batch, max_length=300):
+def text_linker(manager_dict, manager_list, batch, max_length=300):
     for item in text_parser(batch, max_length=max_length):
         try:
             gold_dui = manager_dict[item["entity"]]
@@ -133,33 +133,33 @@ def text_linker(manager_dict, batch, max_length=300):
                 "mention": item["mention"],
                 "gold_dui": gold_dui
             }
-            yield row
+            manager_list.append(row)
         except:
             continue
 
-def text_tokenizer(manager_dict, manager_list, batch, sep_left='[unused1]', sep_right='[unused2]', gold_world='wikipedia', max_length=300):
-    nlp = English()
-    tokenizer = nlp.Defaults.create_tokenizer(nlp)
-    apply_tokenization = lambda x: [ doc.text for doc in tokenizer(x)]
-    for item in text_linker(manager_dict, batch, max_length=max_length):
-        context_left = apply_tokenization(item['context_left'])
-        context_right = apply_tokenization(item['context_right'])
-        mention = apply_tokenization(item['mention'])
-        anchored_context = context_left + [sep_right] + mention + [sep_left] + context_right
-        anchored_context = [ x for x in anchored_context if x.strip() and x.strip('\n') ]
-        row = {
-            "raw_mention": item['mention'],
-            "gold_dui": item['gold_dui'],
-            "gold_world": gold_world,
-            "anchored_context": anchored_context
-        }
-        manager_list.append(row)
+# def text_tokenizer(manager_dict, manager_list, batch, sep_left='[unused1]', sep_right='[unused2]', gold_world='wikipedia', max_length=300):
+#     nlp = English()
+#     tokenizer = nlp.Defaults.create_tokenizer(nlp)
+#     apply_tokenization = lambda x: [ doc.text for doc in tokenizer(x)]
+#     for item in text_linker(manager_dict, batch, max_length=max_length):
+#         context_left = apply_tokenization(item['context_left'])
+#         context_right = apply_tokenization(item['context_right'])
+#         mention = apply_tokenization(item['mention'])
+#         anchored_context = context_left + [sep_right] + mention + [sep_left] + context_right
+#         anchored_context = [ x for x in anchored_context if x.strip() and x.strip('\n') ]
+#         row = {
+#             "raw_mention": item['mention'],
+#             "gold_dui": item['gold_dui'],
+#             "gold_world": gold_world,
+#             "anchored_context": anchored_context
+#         }
+#         manager_list.append(row)
 
 def load_json(fname):
     with open(fname,'r') as f:
         return json.load(f)
 
-def db_commit(manager_list, connection='sqlite:///mentions.db', table='mentions'):
+def db_commit(manager_list):
     now = datetime.now()
     unix_timestamp = datetime.timestamp(now)
     manager_path = 'mentions_' + str(int(unix_timestamp)) + '.json'
@@ -183,7 +183,7 @@ def main():
         for batch_group in jsonl_batch_reader(wikipedia_mentions_folder):
             arguments = [ (manager_dict, manager_list, batch) for batch in batch_group ]
             with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
-                pool.starmap(text_tokenizer, arguments)
+                pool.starmap(text_linker, arguments)
             db_commit(manager_list)
             manager_list = manager.list()
 
