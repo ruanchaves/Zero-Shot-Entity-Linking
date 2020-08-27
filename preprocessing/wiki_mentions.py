@@ -61,21 +61,24 @@ class WikipediaMentionsParser(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         if tag and tag == 'a' and attrs and attrs[0][0] == 'href':
-            self.buffer = Mention()
-            self.buffer.entity = unquote_plus(attrs[0][1]).lower()
+            try:
+                self.buffer = Mention()
+                self.buffer.entity = unquote_plus(attrs[0][1]).lower()
+            except:
+                self.buffer = None
 
     def handle_endtag(self, tag):
         if self.buffer and self.buffer.get_class_name() == 'Mention':
             self.data.append(copy.deepcopy(self.buffer))
-            self.buffer = None
+        self.buffer = None
 
     def handle_data(self, data):
-        if self.buffer and self.buffer.get_class_name() == 'Mention':
+        if isinstance(data,str) and self.buffer and self.buffer.get_class_name() == 'Mention':
             self.buffer.mention = data
-        else:
+        elif isinstance(data,str):
             self.data.append(Text(data))
-
-
+        else:
+            pass
 
 def jsonl_batch_reader(folder, batch_size=1e+2, num_batch=None):
     if not num_batch:
@@ -102,6 +105,7 @@ def convert_to_text(data, max_length=300, orientation='left'):
         return content[0:max_length]
 
 def get_mentions_and_context(data, max_length=300):
+    # TO-DO: optimize
     for idx, item in enumerate(data):
         if item.get_class_name() == 'Mention':
             context_left = convert_to_text(data[0:idx], orientation='left', max_length=max_length)
@@ -175,6 +179,8 @@ def main():
 
         with open(title2dui_path,'r') as f:
             title2dui_dict = json.load(f)
+
+        title2dui_dict = { k.lower():v for k,v in title2dui_dict.items() }
 
         manager_dict.update(title2dui_dict)
 
