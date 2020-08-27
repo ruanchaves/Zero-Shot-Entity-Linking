@@ -10,10 +10,7 @@ import pathlib
 class Reader(object):
 
     def __init__(self, folder):
-        if isinstance(folder, str):
-            self.folder = os.listdir(folder)
-        else:
-            raise NotImplementedError
+        self.folder = os.listdir(folder)
 
     def line_generator(self):
         for item in self.folder:
