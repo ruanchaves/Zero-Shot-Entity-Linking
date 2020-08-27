@@ -10,11 +10,12 @@ import pathlib
 class Reader(object):
 
     def __init__(self, folder):
-        self.folder = os.listdir(folder)
+        file_list = os.listdir(folder)
+        self.files = [ os.path.join(folder, x) for x in file_list ]
 
     def line_generator(self):
-        for item in self.folder:
-            with open(os.path.join(self.folder, item),'r') as f:
+        for item in self.files:
+            with open(item,'r') as f:
                 for line in f:
                     yield json.loads(line.strip())
     
