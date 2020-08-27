@@ -17,7 +17,7 @@ def read_jsonl(jsonl_file, limit=int(1e+8)):
                 break
     return output
 
-def text_tokenizer(manager_dict, manager_list, batch, sep_left='[unused1]', sep_right='[unused2]', gold_world='wikipedia', max_length=300):
+def text_tokenizer(manager_list, batch, sep_left='[unused1]', sep_right='[unused2]', gold_world='wikipedia', max_length=300):
     nlp = English()
     tokenizer = nlp.Defaults.create_tokenizer(nlp)
     apply_tokenization = lambda x: [ doc.text for doc in tokenizer(x)]
