@@ -77,7 +77,7 @@ class WikipediaMentionsParser(HTMLParser):
 
 
 
-def jsonl_batch_reader(folder, batch_size=1e+4, num_batch=None):
+def jsonl_batch_reader(folder, batch_size=1e+2, num_batch=None):
     if not num_batch:
         num_batch = multiprocessing.cpu_count()
     files = [ os.path.join(folder,x) for x in os.listdir(folder) ]
@@ -159,12 +159,10 @@ def load_json(fname):
     with open(fname,'r') as f:
         return json.load(f)
 
-def db_commit(manager_list):
-    now = datetime.now()
-    unix_timestamp = datetime.timestamp(now)
-    manager_path = 'mentions_' + str(int(unix_timestamp)) + '.json'
-    with open(manager_path,'w+') as f:
-        json.dump(copy.deepcopy(manager_list), f)
+def db_commit(manager_list, target='mentions.jsonl'):
+    with open(target,'a+') as f:
+        for row in manager_list:
+            print(json.dumps(copy.deepcopy(row)), file=f)
 
 def main():
     
