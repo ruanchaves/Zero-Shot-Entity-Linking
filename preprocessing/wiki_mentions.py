@@ -7,7 +7,7 @@ from urllib.parse import unquote_plus
 import multiprocessing
 from multiprocessing import Manager
 import sys
-
+from datetime import datetime
 from spacy.tokenizer import Tokenizer
 from spacy.lang.en import English
 
@@ -77,7 +77,7 @@ class WikipediaMentionsParser(HTMLParser):
 
 
 
-def jsonl_batch_reader(folder, batch_size=1e+5, num_batch=None):
+def jsonl_batch_reader(folder, batch_size=1e+4, num_batch=None):
     if not num_batch:
         num_batch = multiprocessing.cpu_count()
     files = [ os.path.join(folder,x) for x in os.listdir(folder) ]
@@ -160,19 +160,11 @@ def load_json(fname):
         return json.load(f)
 
 def db_commit(manager_list, connection='sqlite:///mentions.db', table='mentions'):
-    db = dataset.connect(connection)
-    db.begin()
-    for item in manager_list:
-        try:
-            db[table].insert(dict(
-                    raw_mention=item['raw_mention'],
-                    gold_dui=item['gold_dui'],
-                    gold_world=item['gold_world'],
-                    anchored_context=item['anchored_context']
-                ))
-            db.commit()
-        except:
-            db.rollback()
+    now = datetime.now()
+    unix_timestamp = datetime.timestamp(now)
+    manager_path = 'mentions_' + str(int(unix_timestamp)) + '.json'
+    with open(manager_path,'w+') as f:
+        json.dump(copy.deepcopy(manager_list), f)
 
 def main():
     
