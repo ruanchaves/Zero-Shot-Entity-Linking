@@ -100,7 +100,7 @@ class InKBAllEntitiesEncoder:
     def __init__(self, args, entity_loader_datasetreaderclass, entity_encoder_wrapping_model, vocab):
         self.args = args
         self.entity_loader_datasetreader = entity_loader_datasetreaderclass
-        self.sequence_iterator_for_encoding_entities = BasicIterator(batch_size=128)
+        self.sequence_iterator_for_encoding_entities = BasicIterator(batch_size=args.batch_size_for_kb_encoder)
         self.vocab = vocab
         self.entity_encoder_wrapping_model = entity_encoder_wrapping_model
         self.entity_encoder_wrapping_model.eval()
