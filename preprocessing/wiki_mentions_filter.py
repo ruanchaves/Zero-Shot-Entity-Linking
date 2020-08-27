@@ -8,7 +8,7 @@ import os
 import pathlib
 import random 
 
-def read_jsonl(jsonl_file, limit=1e+8):
+def read_jsonl(jsonl_file, limit=int(1e+8)):
     output = []
     with open(jsonl_file,'r') as f:
         for idx, line in enumerate(f):
@@ -40,9 +40,9 @@ def main():
     mentions_target_folder = '/home/repositories/Zero-Shot-Entity-Linking/data/mentions_split_by_world/wikipedia'
     pathlib.Path(mentions_target_folder).mkdir(parents=True, exist_ok=True)
 
-    mentions = read_jsonl(mentions_source_file, limit=1e+8)
-    mentions = random.choices(mentions, k=1e+5)
-    chunk_size = 1e+3
+    mentions = read_jsonl(mentions_source_file, limit=int(1e+8))
+    mentions = random.choices(mentions, k=int(1e+5))
+    chunk_size = int(1e+3)
     mentions = [mentions[x:x+chunk_size] for x in range(0, len(mentions), chunk_size)]
     
     with Manager() as manager:
