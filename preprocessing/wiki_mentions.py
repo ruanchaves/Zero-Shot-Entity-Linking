@@ -176,6 +176,18 @@ def db_commit(manager_list, connection='sqlite:///mentions.db', table='mentions'
 
 def main():
 
+    #initialization
+    db_commit(
+        [
+            {
+                "raw_mention": "",
+                "gold_dui": "",
+                "gold_world": "",
+                "anchored_context": []
+            }
+        ]
+    )
+    
     wikipedia_mentions_folder = '/home/datasets/entity_linking/BLINK/data/wikipedia/wikimentions/AA'
     title2dui_path = '/home/repositories/Zero-Shot-Entity-Linking/data/worlds/wikipedia/title2dui.json'
     
