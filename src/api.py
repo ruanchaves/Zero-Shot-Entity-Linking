@@ -77,7 +77,7 @@ def main():
 
     with torch.no_grad():
         finalEvalFlag = 0
-        world_name = 'yugioh'
+        world_name = 'wikipedia'
         dev_or_test_flag = 'test'
 
         reader_for_eval = WorldsReaderOnline(args=opts, world_name=world_name, token_indexers=global_tokenIndexer,
@@ -112,8 +112,14 @@ Evaluator = main()
 
 @app.route('/', methods=['GET', 'POST'])
 def model_entrypoint():
+    with open(parameters_json,'r') as f:
+        parameters = json.load(f)
     content = request.get_json()
     res = []
     for item in predict(content):
         res.append(item)
-    return jsonify(res)
+    response = {
+        "response": res,
+        "parameters": parameters
+    }
+    return jsonify(response)
