@@ -68,7 +68,8 @@ def main():
         res = requests.post('http://localhost:5000/', json=query.to_json())
         try:
             log[fname] = res.json()
-        except:
+        except Exception as e:
+            print(e)
             log[fname] = "error"
         with open(logfile, 'w+') as f:
             json.dump(log, f)
