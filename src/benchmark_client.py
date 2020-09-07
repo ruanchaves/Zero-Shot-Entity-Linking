@@ -14,7 +14,7 @@ def dataset_reader(fname):
         for line in f:
             json_line = json.loads(line.strip())
             row = {
-                'entry_id': json_line['Wikipedia_ID'],
+                'entry_id': str(json_line['Wikipedia_ID']),
                 'context_left': json_line['context_left'],
                 'context_right': json_line['context_right'],
                 'mention': json_line['mention']
