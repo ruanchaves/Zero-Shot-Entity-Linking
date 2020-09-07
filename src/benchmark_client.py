@@ -72,3 +72,6 @@ def main():
             log[fname] = "error"
         with open(logfile, 'w+') as f:
             json.dump(log, f)
+
+if __name__ == '__main__':
+    main()
