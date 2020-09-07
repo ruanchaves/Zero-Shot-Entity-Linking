@@ -47,6 +47,12 @@ class Params:
         ## Save to checkpoint
         parser.add_argument('-save_checkpoints', action='store', default=False, type=strtobool)
 
+        ## Entities
+        parser.add_argument('-save_entities', action='store', default=False, type=strtobool)
+        parser.add_argument('-load_entities', action='store', default=False, type=strtobool)
+        parser.add_argument('-entities_path', action='store', default='/home/repositories/Zero-Shot-Entity-Linking/src', type=str)
+        parser.add_argument('-entities_filename', action='store', default='entities.t7', type=str)
+
         parser = self.fixed_params_for_preprocess_adder(parser=parser)
         self.opts = parser.parse_args(sys.argv[1:])
 

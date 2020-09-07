@@ -13,6 +13,10 @@ from allennlp.data.iterators import BasicIterator
 import pdb
 from allennlp.models import Model
 
+# Custom imports
+import os
+from utils import pickle_load_object, pickle_save_object
+
 class Pooler_for_title_and_desc(Seq2VecEncoder):
     def __init__(self, args, word_embedder):
         super(Pooler_for_title_and_desc, self).__init__()
@@ -113,12 +117,19 @@ class InKBAllEntitiesEncoder:
         entity_generator = self.sequence_iterator_for_encoding_entities(ds, num_epochs=1, shuffle=False)
         entity_generator_tqdm = tqdm(entity_generator, total=self.sequence_iterator_for_encoding_entities.get_num_batches(ds))
         print('======Encoding all entites from title and description=====')
-        with torch.no_grad():
-            for batch in entity_generator_tqdm:
-                batch = nn_util.move_to_device(batch, self.cuda_device)
-                duidxs, embs = self._extract_cuidx_and_its_encoded_emb(batch)
-                for duidx, emb in zip(duidxs, embs):
-                    duidx2emb.update({int(duidx):emb})
+        
+        entities_full_path = os.path.join(self.args.entities_path, self.args.entities_filename)
+        if self.args.load_entities:
+            duidx2emb = pickle_load_object(entities_full_path)
+        else:
+            with torch.no_grad():
+                for batch in entity_generator_tqdm:
+                    batch = nn_util.move_to_device(batch, self.cuda_device)
+                    duidxs, embs = self._extract_cuidx_and_its_encoded_emb(batch)
+                    for duidx, emb in zip(duidxs, embs):
+                        duidx2emb.update({int(duidx):emb})
+            if self.args.save_entities:
+                pickle_save_object(duidx2emb, entities_full_path)
 
         return duidx2emb
 

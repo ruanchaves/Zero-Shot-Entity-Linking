@@ -40,5 +40,9 @@
     "mention_leftandright_tokenwindowwidth": 40,
     "debugSampleNum": 100000000,
     "dir_for_each_world": "./data/worlds/",
-    "experiment_logdir": "./src/experiment_logdir/"
+    "experiment_logdir": "./src/experiment_logdir/",
+    "save_entities": 1,
+    "load_entities": 0,
+    "entities_path": "/home/repositories/Zero-Shot-Entity-Linking/src",
+    "entities_filename": "entities.t7"
 }
