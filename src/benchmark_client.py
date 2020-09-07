@@ -63,17 +63,20 @@ def main():
     for fname in os.listdir(benchmarks_folder):
         path = os.path.join(benchmarks_folder, fname)
         for item in dataset_reader(path):
+            query = MentionList()
             query.append_from_fields(**item)
-
-        res = requests.post('http://localhost:5000/', json=query.to_json())
-        try:
-            print(res)
-            log[fname] = res.json()
-        except Exception as e:
-            print(e)
-            log[fname] = "error"
-        with open(logfile, 'w+') as f:
-            json.dump(log, f)
+            res = requests.post('http://localhost:5000/', json=query.to_json())
+            log = {}
+            try:
+                print(res)
+                log['fname'] = fname
+                log['res'] = res.json()
+            except Exception as e:
+                print(e)
+                log['fname'] = fname
+                log['res'] = "error"
+            with open(logfile, 'a+') as f:
+                print(json.dumps(log), file=f)
 
 if __name__ == '__main__':
     main()
