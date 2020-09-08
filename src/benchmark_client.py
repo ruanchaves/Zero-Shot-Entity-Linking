@@ -14,7 +14,7 @@ def dataset_reader(fname):
         for line in f:
             json_line = json.loads(line.strip())
             row = {
-                'entry_id': json_line['Wikipedia_ID'],
+                'entry_id': str(json_line['Wikipedia_ID']),
                 'context_left': json_line['context_left'],
                 'context_right': json_line['context_right'],
                 'mention': json_line['mention']
@@ -70,13 +70,11 @@ def main():
             try:
                 print(res)
                 log['fname'] = fname
-                log['entity_id'] = res.json()['response']['faiss_search_candidate_result_duidxs']
-                log['gold_entity_id'] = res.json()['response']['gold_duidxs']
+                log['res'] = res.json()
             except Exception as e:
                 print(e)
                 log['fname'] = fname
-                log['entity_id'] = None
-                log['gold_entity_id'] = None
+                log['res'] = None
             with open(logfile, 'a+') as f:
                 print(json.dumps(log), file=f)
 
