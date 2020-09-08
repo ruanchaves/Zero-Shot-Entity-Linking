@@ -70,11 +70,13 @@ def main():
             try:
                 print(res)
                 log['fname'] = fname
-                log['res'] = res.json()
+                log['entity_id'] = res.json()['response'][0]['faiss_search_candidate_result_duidxs']
+                log['gold_id'] = res.json()['response'][0]['gold_duidxs']
             except Exception as e:
                 print(e)
                 log['fname'] = fname
-                log['res'] = None
+                log['entity_id'] = None
+                log['gold_id'] = None
             with open(logfile, 'a+') as f:
                 print(json.dumps(log), file=f)
 
